@@ -1,0 +1,233 @@
+// Wishlist data model. The datasource provider is switched by
+// scripts/db-provider.mjs: SQLite for local dev, PostgreSQL when deployed.
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  image        String?
+  passwordHash String?
+  // Bearer token used by the browser extension (a "personal access token").
+  apiToken     String    @unique
+  // Google sign-ins are trusted immediately; password sign-ups must verify.
+  emailVerified DateTime?
+  // Preferences
+  // When true, claims this person makes are hidden from the list owner.
+  anonClaims   Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  verifications VerificationToken[]
+  resets        ResetToken[]
+
+  lists         Wishlist[]
+  following     Follow[]       @relation("follower")
+  followers     Follow[]       @relation("followee")
+  reservations  Reservation[]
+  shares        Share[]
+
+  // Occasions belonging to this person (their birthday, etc.)
+  occasions     Occasion[]     @relation("occasionSubject")
+  // Occasions this person has recorded for others
+  occasionsLog  Occasion[]     @relation("occasionCreator")
+
+  @@index([email])
+}
+
+/// Single-use tokens for email verification. Hashed, so a DB leak is not a
+/// login leak.
+model VerificationToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model ResetToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Wishlist {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  // Public handle used in /w/<slug> — this is what gets shared.
+  slug        String    @unique
+  emoji       String    @default("Gift")
+  // PRIVATE: only the owner. SHARED: link + invited people. PUBLIC: anyone with the link.
+  visibility  String    @default("PRIVATE")
+  // Owners can hide prices/links from viewers (e.g. surprise lists).
+  showPrices  Boolean   @default(true)
+  ownerId     String
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  // Soft delete: archived lists are hidden but recoverable.
+  archivedAt  DateTime?
+
+  items       Item[]
+  shares      Share[]
+  links       ShareLink[]
+  occasions   Occasion[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([ownerId])
+  @@index([archivedAt])
+}
+
+model Item {
+  id       String  @id @default(cuid())
+  title    String
+  url      String
+  imageUrl String?
+  price    Float?
+  currency String  @default("USD")
+  note     String?
+  // 1 = nice to have, 2 = would love, 3 = really wants it
+  priority Int     @default(2)
+  // Owner marks their own items as bought/hidden.
+  hidden   Boolean @default(false)
+  position Int     @default(0)
+  listId   String
+  list     Wishlist @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  // Set when the owner confirms the gift actually arrived.
+  receivedAt DateTime?
+
+  reservations Reservation[]
+  prices       ItemPrice[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([listId])
+  @@index([url])
+}
+
+/// Append-only price history, so we can show a sparkline and alert on drops.
+model ItemPrice {
+  id        String   @id @default(cuid())
+  itemId    String
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  price     Float
+  currency  String   @default("USD")
+  // "manual" (user typed it), "extension" (read from the page), "check" (background poll)
+  source    String   @default("manual")
+  createdAt DateTime @default(now())
+
+  @@index([itemId, createdAt])
+}
+
+model Share {
+  id     String @id @default(cuid())
+  // VIEWER can reserve items. EDITOR can also add/edit items.
+  role   String @default("VIEWER")
+  listId String
+  userId String
+  list   Wishlist @relation(fields: [listId], references: [id], onDelete: Cascade)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([listId, userId])
+  @@index([userId])
+}
+
+// Revocable share links, so you can disable a link that leaked.
+model ShareLink {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  role      String    @default("VIEWER")
+  listId    String
+  list      Wishlist  @relation(fields: [listId], references: [id], onDelete: Cascade)
+  revoked   Boolean   @default(false)
+  expiresAt DateTime?
+  // Optional passphrase: the viewer must supply it to open the list.
+  passcode  String?
+  createdAt DateTime  @default(now())
+
+  @@index([listId])
+}
+
+// Following someone's wishlist = keeping their lists on your gifting dashboard.
+model Follow {
+  id         String   @id @default(cuid())
+  followerId String
+  followeeId String
+  // Optional note, e.g. "sister", "partner".
+  relation   String?
+  follower   User     @relation("follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followee   User     @relation("followee", fields: [followeeId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([followerId, followeeId])
+  @@index([followeeId])
+}
+
+/// A date that matters — a birthday, wedding, anniversary. This is what turns
+/// a firehose of unclaimed items into an answerable question.
+model Occasion {
+  id        String   @id @default(cuid())
+  title     String
+  date      DateTime
+  /// yearly | none
+  repeats   String   @default("yearly")
+  /// birthday | wedding | anniversary | holiday | other
+  kind      String   @default("other")
+  /// Remind me this many days ahead.
+  leadDays  Int      @default(14)
+
+  // Whose occasion this is.
+  subjectId  String
+  subject    User     @relation("occasionSubject", fields: [subjectId], references: [id], onDelete: Cascade)
+  // Who recorded it.
+  creatorId  String
+  creator    User     @relation("occasionCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+
+  /// Optional: the list this occasion relates to, so gifts can be tracked.
+  listId     String?
+  list       Wishlist? @relation(fields: [listId], references: [id], onDelete: SetNull)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([subjectId])
+  @@index([date])
+}
+
+// A gift-giver claims an item. The owner sees "3 people are looking at this".
+model Reservation {
+  id        String   @id @default(cuid())
+  itemId    String
+  userId    String
+  note      String?
+  /// Claimed by someone who asked not to be identified to the list owner.
+  anonymous Boolean  @default(false)
+  item      Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  // One claim per item keeps the "who already got it?" answer unambiguous.
+  @@unique([itemId])
+  @@index([userId])
+}

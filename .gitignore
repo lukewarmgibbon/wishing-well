@@ -1,0 +1,23 @@
+node_modules
+.next
+out
+build
+.DS_Store
+*.pem
+npm-debug.log*
+.env
+next-env.d.ts
+prisma/dev.db
+prisma/dev.db-journal
+extension/*.zip
+.test-data
+
+# Local Chromium libraries for the extension regression test (see
+# scripts/setup-browser.sh). Downloaded binaries, never part of the project.
+.browser-libs/
+
+# TypeScript incremental build cache.
+tsconfig.tsbuildinfo
+
+# UI screenshots captured during development, not source.
+.shots/

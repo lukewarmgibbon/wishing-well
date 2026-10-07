@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wishing Well</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main id="app">
+      <header class="bar">
+        <span class="logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+          </svg>
+        </span>
+        <strong>Wishing Well</strong>
+        <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </button>
+      </header>
+
+      <!-- Step 1: sign in -->
+      <section id="login-view" class="view hidden">
+        <p class="hint">Sign in to start saving things.</p>
+        <form id="login-form">
+          <label class="lbl" for="email">Email</label>
+          <input id="email" type="email" autocomplete="username" required />
+          <label class="lbl" for="password">Password</label>
+          <input id="password" type="password" autocomplete="current-password" required />
+          <button class="primary" type="submit">Sign in</button>
+        </form>
+        <p class="hint small">
+          Google accounts: sign in on the website first, then use “Connect with a code” in settings.
+        </p>
+        <button id="show-code" class="linky">Connect with a code instead</button>
+      </section>
+
+      <!-- Step 2: pick a list and add -->
+      <section id="add-view" class="view hidden">
+        <div id="scrape-status" class="scrape">Reading this page…</div>
+
+        <div class="preview">
+          <img id="thumb" alt="" hidden />
+          <div class="preview-text">
+            <p id="item-title" class="item-title">—</p>
+            <p id="item-site" class="item-site"></p>
+            <p id="item-price" class="item-price"></p>
+          </div>
+        </div>
+
+        <label class="lbl" for="list-select">Add to</label>
+        <select id="list-select"></select>
+
+        <details class="more">
+          <summary>Adjust before saving</summary>
+          <label class="lbl" for="edit-title">Title</label>
+          <input id="edit-title" />
+          <label class="lbl" for="edit-price">Price</label>
+          <input id="edit-price" inputmode="decimal" placeholder="optional" />
+          <label class="lbl" for="edit-note">Note</label>
+          <input id="edit-note" placeholder="size, colour, exact link" />
+          <label class="lbl" for="edit-priority">How much you want it</label>
+          <select id="edit-priority">
+            <option value="1">Nice to have</option>
+            <option value="2" selected>Would love</option>
+            <option value="3">Really want</option>
+          </select>
+        </details>
+
+        <button id="save-btn" class="primary">Add to wishlist</button>
+        <button id="new-list-btn" class="linky">+ New list</button>
+
+        <button id="bulk-btn" class="secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="7" height="7" x="3" y="3" rx="1" />
+            <rect width="7" height="7" x="14" y="3" rx="1" />
+            <rect width="7" height="7" x="14" y="14" rx="1" />
+            <rect width="7" height="7" x="3" y="14" rx="1" />
+          </svg>
+          Save everything on this page
+        </button>
+
+        <p id="message" class="message" role="status"></p>
+      </section>
+
+      <!-- Bulk capture: pick from everything found on the page -->
+      <section id="bulk-view" class="view hidden">
+        <div class="bulk-head">
+          <h2>Found on this page</h2>
+          <button id="bulk-back" class="linky">Back</button>
+        </div>
+        <p id="bulk-status" class="scrape">Scanning…</p>
+        <label class="lbl" for="bulk-list-select">Add to</label>
+        <select id="bulk-list-select"></select>
+
+        <ul id="bulk-list" class="bulk-list"></ul>
+
+        <div class="bulk-actions">
+          <button id="bulk-none" class="secondary">Clear</button>
+          <button id="bulk-save" class="primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+            Save selected
+          </button>
+        </div>
+
+        <p id="bulk-message" class="message" role="status"></p>
+      </section>
+
+      <!-- Step 3: settings / server + token pairing -->
+      <section id="settings-view" class="view hidden">
+        <label class="lbl" for="server">Wishing Well address</label>
+        <input id="server" placeholder="https://wish.example.com" />
+
+        <label class="lbl" for="token">Sign-in code</label>
+        <input id="token" placeholder="paste the code from My lists" />
+        <button id="save-config" class="primary">Save</button>
+
+        <p class="hint small">
+          This build is set to <em>https://wish.example.com</em> — you can change it below if you run your own copy.
+        </p>
+
+        <button id="back-btn" class="linky">← Back</button>
+        <button id="logout-btn" class="linky danger">Sign out of this browser</button>
+      </section>
+
+      <!-- New list inline -->
+      <section id="newlist-view" class="view hidden">
+        <p class="hint">Name your new list</p>
+        <input id="newlist-title" placeholder="Christmas 2026" />
+        <button id="create-list-btn" class="primary">Create and add here</button>
+        <button id="newlist-back" class="linky">← Back</button>
+      </section>
+    </main>
+
+    <script src="popup.js" type="module"></script>
+  </body>
+</html>
