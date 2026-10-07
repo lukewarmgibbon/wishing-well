@@ -54,9 +54,6 @@ export default async function Home() {
                 Create your wishlist
                 <ArrowRight className="size-4" />
               </Link>
-              <Link href="/demo" className="btn btn-secondary px-4 py-2.5 text-[0.875rem]">
-                See the demo
-              </Link>
             </div>
 
             <p className="mt-6 text-[0.8125rem] text-v-400">Free · No card · Share links you can revoke</p>
