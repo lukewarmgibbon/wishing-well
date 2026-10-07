@@ -279,6 +279,20 @@
     color: var(--color-v-400);
   }
 
+  /* Small uppercase label that sits above a heading.
+     Used 11 times across ItemCard, ListsView, ProfileSettings and
+     PricePopover, but never actually defined - so until now every one of
+     those labels rendered as plain body text at the same size as the copy
+     around it. Must live inside @layer components so it keeps the same
+     cascade priority as .btn, .label and the rest. */
+  .kicker {
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
   .chip {
     display: inline-flex;
     align-items: center;

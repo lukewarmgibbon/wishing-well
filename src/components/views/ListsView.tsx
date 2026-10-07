@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NewListButton } from "@/components/NewListButton";
 import { ExtensionSetupCard } from "@/components/ExtensionSetupCard";
+import { SetupChecklist } from "@/components/views/SetupChecklist";
 import { ListIcon } from "@/components/ListIcon";
 import { ArchiveRestore } from "lucide-react";
 
@@ -71,11 +72,20 @@ export async function ListsView({
         </div>
       </div>
 
+      <SetupChecklist userId={userId} />
+
       {lists.length === 0 ? (
         <div className="py-24 text-center">
           <p className="font-semibold tracking-[-0.02em] text-[1.75rem]">Nothing here yet</p>
           <p className="mx-auto mt-3 max-w-sm text-[0.9rem] text-v-500 dark:text-v-400">
             Make a list for an occasion, a room you&apos;re redecorating, or just things you like.
+          </p>
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <NewListButton />
+          </div>
+          <p className="mt-6 text-[0.85rem] text-v-400">
+            Adding things by hand works fine. The browser extension picks items
+            straight off a product page, and the setup card below shows you how.
           </p>
         </div>
       ) : (

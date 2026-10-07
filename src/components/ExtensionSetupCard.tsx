@@ -48,7 +48,11 @@ export function ExtensionSetupCard({
         <span className="chip bg-white text-v-500 dark:text-v-400">Chrome · Edge · Brave</span>
       </div>
 
-      <div className="grid gap-5 p-5 md:grid-cols-2">
+      {/* grid-cols-1 is required, not decorative: a bare single-column grid
+          resolves to `auto`, which sizes to its widest content rather than to
+          the container. The step text embeds a long unbreakable path, so on a
+          phone that column grew past the viewport and clipped the instructions. */}
+      <div className="grid grid-cols-1 gap-5 p-5 md:grid-cols-2">
         <ol className="space-y-3 text-sm">
           {[
             ["Open the extensions page", "In Chrome, go to chrome://extensions and turn on Developer mode."],
@@ -61,9 +65,13 @@ export function ExtensionSetupCard({
               <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-ink text-xs font-bold text-white">
                 {i + 1}
               </span>
-              <div>
+              {/* min-w-0 is load-bearing: the step text embeds a long unbreakable
+                  path, and a flex child without it refuses to shrink below its
+                  content. On a phone that pushed this column 570px wide inside a
+                  390px viewport, silently cutting the instructions off-screen. */}
+              <div className="min-w-0">
                 <p className="font-medium">{title}</p>
-                <p className="text-v-500 dark:text-v-400">{body}</p>
+                <p className="break-words text-v-500 dark:text-v-400">{body}</p>
               </div>
             </li>
           ))}
