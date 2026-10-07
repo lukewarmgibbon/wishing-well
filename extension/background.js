@@ -14,7 +14,7 @@
  * installing it. The localhost value is only the zero-config default for
  * running against a local dev server.
  */
-const BUILD_ORIGIN = "http://localhost:3000";
+const BUILD_ORIGIN = "https://wishing-well-seven.vercel.app";
 const LOCAL_DEV = "http://localhost:3000";
 
 // A checkout that was never run through scripts/build-extension.mjs still

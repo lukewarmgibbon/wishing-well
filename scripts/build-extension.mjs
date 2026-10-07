@@ -68,24 +68,42 @@ const bgPath = join(EXT, "background.js");
 const bg = readFileSync(bgPath, "utf8");
 // Match the placeholder OR a previously stamped origin, so re-running the
 // script with a different WISHING_WELL_ORIGIN actually moves the build.
-const stamped = bg.replace(
-  /const BUILD_ORIGIN = (?:\"__WISHING_WELL_ORIGIN__\"|"[^"]*");/,
-  `const BUILD_ORIGIN = ${JSON.stringify(origin)};`,
-);
-if (stamped === bg) {
+//
+// Test for a *match*, not for changed text. Rebuilding for the origin that is
+// already stamped produces byte-identical text, so a before/after comparison
+// reports "could not find" and aborts — leaving the popup and manifest
+// unstamped even though this line was perfectly findable.
+const BUILD_ORIGIN_RE = /const BUILD_ORIGIN = (?:\"__WISHING_WELL_ORIGIN__\"|"[^"]*");/;
+if (!BUILD_ORIGIN_RE.test(bg)) {
   console.error("Could not find the BUILD_ORIGIN line in extension/background.js.");
   process.exit(1);
 }
-writeFileSync(bgPath, stamped);
+writeFileSync(bgPath, bg.replace(BUILD_ORIGIN_RE, `const BUILD_ORIGIN = ${JSON.stringify(origin)};`));
 
 // --- popup: the settings placeholder should match ---
+//
+// Both replacements below match *whatever origin is currently in there*, not
+// just the literal localhost default. Matching only the original string makes
+// the build a one-shot: the first run stamps a domain, and every later run for
+// a different domain silently leaves the stale one behind — which is how
+// `wish.example.com` ended up in a pushed build.
 const popupPath = join(EXT, "popup.html");
 let popup = readFileSync(popupPath, "utf8");
-popup = popup.replace(/placeholder="http:\/\/localhost:3000"/, `placeholder="${origin}"`);
+
+const before = popup;
 popup = popup.replace(
-  /Find your code on the website under <em>My lists → Add the browser extension<\/em>\./,
-  `This build is set to <em>${origin}</em> — you can change it below if you run your own copy.`,
+  /placeholder="https?:\/\/[^"]*"/,
+  `placeholder="${origin}"`,
 );
+popup = popup.replace(
+  /This build is set to <em>[^<]*<\/em>/,
+  `This build is set to <em>${origin}</em>`,
+);
+if (popup === before) {
+  console.warn(
+    "  warning: popup.html had nothing to re-stamp. Its markup may have changed.",
+  );
+}
 writeFileSync(popupPath, popup);
 
 console.log(`extension/ prepared for ${origin}`);

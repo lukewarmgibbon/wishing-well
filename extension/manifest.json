@@ -10,8 +10,8 @@
     "activeTab"
   ],
   "host_permissions": [
-    "http://localhost:3000/*",
-    "https://*/*"
+    "https://wishing-well-seven.vercel.app/*",
+    "http://localhost/*"
   ],
   "action": {
     "default_title": "Add to wishlist",
@@ -36,5 +36,8 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "optional_host_permissions": [
+    "https://*/*"
+  ]
 }
