@@ -12,7 +12,9 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { siteUrl } from "@/lib/format";
+
+const SITE = siteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE),

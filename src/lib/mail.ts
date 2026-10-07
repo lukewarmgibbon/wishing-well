@@ -9,6 +9,7 @@
 
 import { mkdir, appendFile } from "fs/promises";
 import path from "path";
+import { siteUrl } from "@/lib/format";
 
 export type Mail = {
   to: string;
@@ -18,7 +19,7 @@ export type Mail = {
 };
 
 function appUrl() {
-  return process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
+  return siteUrl(process.env.NEXT_PUBLIC_APP_URL);
 }
 
 async function writeToOutbox(mail: Mail) {

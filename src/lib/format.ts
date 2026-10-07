@@ -63,3 +63,26 @@ export function titleFromUrl(url: string) {
     return "New item";
   }
 }
+
+/**
+ * Normalise a site URL that a human typed into a dashboard.
+ *
+ * People paste `example.com`, `example.com/`, or the full `https://example.com`,
+ * and all three mean the same thing to us. `new URL()` only accepts the last
+ * one and throws on the other two — and because this runs during the build, a
+ * missing scheme turns into a failed deploy with an error that points nowhere
+ * near the real cause.
+ *
+ * So: assume https when no scheme is given, strip trailing slashes, and return
+ * the local default rather than throwing if the result is still unusable.
+ */
+export function siteUrl(raw: string | undefined | null, fallback = "http://localhost:3000"): string {
+  const value = raw?.trim();
+  if (!value) return fallback;
+  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(value) ? value : `https://${value}`;
+  try {
+    return new URL(withScheme).origin;
+  } catch {
+    return fallback;
+  }
+}

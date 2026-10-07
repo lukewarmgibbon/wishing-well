@@ -27,12 +27,26 @@ const nextConfig: NextConfig = {
 
   // The live preview is served from a proxy host rather than localhost. Without
   // this, Next blocks its own dev resources (HMR, fonts) for that origin.
-  allowedDevOrigins: [
-    "*.e2b.app",
-    process.env.NEXT_PUBLIC_APP_URL
-      ? new URL(process.env.NEXT_PUBLIC_APP_URL).hostname
-      : "localhost",
-  ],
+  //
+  // This reads an env var a human types into a dashboard, and people reasonably
+  // paste a bare hostname without the scheme. `new URL("example.com")` throws,
+  // and because config is evaluated during the build, that turns a typo into a
+  // failed deploy with an error that says nothing about the cause. Assume the
+  // scheme, fall back to localhost, and complain loudly rather than crash.
+  allowedDevOrigins: (() => {
+    const raw = process.env.NEXT_PUBLIC_APP_URL?.trim();
+    if (!raw) return ["*.e2b.app", "localhost"];
+    const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`;
+    try {
+      return ["*.e2b.app", new URL(withScheme).hostname];
+    } catch {
+      console.warn(
+        `  [wishing-well] NEXT_PUBLIC_APP_URL ("${raw}") is not a usable URL; ` +
+          "falling back to localhost for dev origins.",
+      );
+      return ["*.e2b.app", "localhost"];
+    }
+  })(),
 
   async headers() {
     return [
