@@ -65,6 +65,9 @@ export const LIMITS = {
   share: { limit: 20, windowMs: 10 * 60_000 },
   apiWrite: { limit: 120, windowMs: 60_000 },
   itemBulk: { limit: 10, windowMs: 60_000 },
+  // Each call makes the server fetch a third-party page, so this is both an
+  // abuse limit and our egress bill. Generous enough for bulk adding by hand.
+  metadata: { limit: 60, windowMs: 60_000 },
 } as const;
 
 export function guard(req: Request, scope: keyof typeof LIMITS): RateLimit {

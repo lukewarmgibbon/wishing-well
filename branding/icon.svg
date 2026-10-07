@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Wishing Well">
+  <!--
+    App mark: a single solid flame on the brand violet.
+
+    Two rules drove this design, both learned the hard way by rendering the
+    candidates at 16px and looking at the actual pixels:
+
+      1. No strokes, no hairlines, no detail that collapses. The previous
+         candle icon was mostly thin outlines - a ribbon, a flame, stripes -
+         and at Chrome's 16px toolbar size it anti-aliased into grey mush.
+         Every element here is a filled shape roughly 50px wide or more.
+      2. Nothing but two colours. Detail that survives 16px on its own does not
+         survive being shrunk to 16px inside an already-small icon.
+
+    The flame stays inside the inner 80% of the canvas (the Android maskable
+    safe zone), so the adaptive icon is not clipped when the launcher crops it
+    to a circle or squircle.
+  -->
+  <rect width="512" height="512" rx="116" fill="#5f6df5" />
+  <path d="M256 88c0 92-126 128-126 224a126 126 0 0 0 252 0c0-96-126-132-126-224z" fill="#ffd166" />
+</svg>
